@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Downloader</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        body {
+            background-color: #121212;
+            color: None;
+            color: white;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .container {
+            max-width: 600px;
+            margin-top: 50px;
+            animation: fadeIn 1s ease-in-out;
+        }
+        .progress {
+            height: 20px;
+            display: none;
+        }
+        .video-preview {
+            display: none;
+            margin-top: 10px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0px 4px 10px rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease-in-out;
+        }
+        .video-thumbnail {
+            width: 100%;
+            border-radius: 8px;
+            transition: transform 0.3s ease-in-out;
+        }
+        .video-thumbnail:hover {
+            transform: scale(1.05);
+        }
+        .btn-primary {
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #ff0000;
+            transform: scale(1.05);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container text-center">
+        <h1 class="mb-4" style="color: #ff0000;">QuickTude</h1>
+                
+        <form id="download-form">
+            <div class="mb-3">
+                <input type="text" class="form-control" id="video-url" placeholder="Enter YouTube URL" required oninput="fetchVideoDetails()">
+            </div>
+            
+            <div class="video-preview" id="video-preview">
+                <img id="video-thumbnail" class="video-thumbnail" src="" alt="Video Thumbnail">
+                <p id="video-title"></p>
+            </div>
+            
+            <div class="mb-3">
+                <label for="quality">Select Quality:</label>
+                <select id="quality" class="form-select">
+                    <option value="auto">Auto (Best Available)</option>
+                    <option value="144p">144p</option>
+                    <option value="240p">240p</option>
+                    <option value="360p">360p</option>
+                    <option value="480p">480p</option>
+                    <option value="720p">720p</option>
+                    <option value="1080p">1080p</option>
+                </select>
+            </div>
+            
+            <div class="mb-3">
+                <label>Download Options:</label>
+                <div class="btn-group d-flex" role="group">
+                    <input type="radio" class="btn-check" name="download-type" value="video" id="video" checked>
+                    <label class="btn btn-outline-light w-100" for="video"><i class="fas fa-video"></i> Video</label>
+                    
+                    <input type="radio" class="btn-check" name="download-type" value="audio" id="audio">
+                    <label class="btn btn-outline-light w-100" for="audio"><i class="fas fa-music"></i> Audio</label>
+                    
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-100"><i class="fas fa-download"></i> Download</button>
+        </form>
+        
+        <div class="progress mt-4">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%;">0%</div>
+        </div>
+        
+        <div id="downloadLink"></div>
+    </div>
+
+    <script>
+        document.getElementById("download-form").addEventListener("submit", function (e) {
+            e.preventDefault();
+            startDownload();
+        });
+
+        function startDownload() {
+            let url = document.getElementById("video-url").value;
+            let quality = document.getElementById("quality").value;
+            let type = document.querySelector('input[name="download-type"]:checked').value;
+            let progressBar = document.querySelector(".progress");
+            let progressText = document.querySelector(".progress-bar");
+            let downloadLink = document.getElementById("downloadLink");
+
+            if (!url) {
+                alert("Please enter a valid YouTube URL.");
+                return;
+            }
+
+            // Reset UI
+            progressBar.style.display = "block";
+            progressText.style.width = "0%";
+            progressText.innerText = "Starting...";
+            downloadLink.innerHTML = "";
+
+            // Simulate progress bar
+            let progress = 0;
+            let interval = setInterval(() => {
+                if (progress < 90) {  
+                    progress += 10;
+                    progressText.style.width = `${progress}%`;
+                    progressText.innerText = `${progress}%`;
+                }
+            }, 1000);
+
+            // Send AJAX request to Flask
+            fetch("/download", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url: url, quality: quality, type: type })
+            })
+            .then(response => response.json())
+            .then(data => {
+                clearInterval(interval);
+                if (data.error) {
+                    alert("Error: " + data.error);
+                    progressBar.style.display = "none";
+                } else {
+                    progressText.style.width = "100%";
+                    progressText.innerText = "Download Ready!";
+                    
+                    // Show download button
+                    downloadLink.innerHTML = `
+                        <a class="btn btn-success mt-3" href="/download-file?file=${data.file}" download>Click to Download</a>
+                    `;
+                }
+            })
+            .catch(error => {
+                clearInterval(interval);
+                alert("Something went wrong.");
+                console.error(error);
+            });
+        }
+    </script>
+</body>
+</html>
