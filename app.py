@@ -21,31 +21,23 @@ def download_video(url, quality, download_type):
             format_string = f"bv*[height={quality}]+ba/b[height={quality}]/b"
             extension = "mp4"
 
+        # yt-dlp options
         ydl_opts = {
             "format": format_string,
             "outtmpl": f"{DOWNLOAD_FOLDER}/%(title)s.%(ext)s",
             "merge_output_format": extension,
-            "ffmpeg_location": r"C:\Users\rk364\Downloads\ffmpeg-2025-03-10-git-87e5da9067-essentials_build\ffmpeg-2025-03-10-git-87e5da9067-essentials_build\bin",
-            "noplaylist": True,
-            "nopart": True,  # Prevents partial downloads (Fixes 416 error)
-            "writethumbnail": True,  # Ensures metadata issues don't interfere
-            "noprogress": True,  # Avoids unnecessary progress interruptions
+            "ffmpeg_location": "/usr/bin/ffmpeg",  
+            "cookiefile": "cookies.txt",  # ✅ Add this line to use cookies
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
             file_path = ydl.prepare_filename(info)
+            file_name = os.path.basename(file_path)
 
-        # Ensure correct file extension
-        final_file_path = file_path.replace(".webm", f".{extension}")
-
-        if not os.path.exists(final_file_path):
-            return None  
-
-        return os.path.basename(final_file_path)  
+        return file_name
     except Exception as e:
-        print(f"Download error: {e}")  # Debugging
-        return None
+        return str(e)
 
 @app.route("/")
 def index():
