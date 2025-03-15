@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,10 +21,12 @@
             margin-top: 50px;
             animation: fadeIn 1s ease-in-out;
         }
+
         .progress {
             height: 20px;
             display: none;
         }
+
         .video-preview {
             display: none;
             margin-top: 10px;
@@ -32,41 +35,53 @@
             box-shadow: 0px 4px 10px rgba(255, 255, 255, 0.2);
             transition: transform 0.3s ease-in-out;
         }
+
         .video-thumbnail {
             width: 100%;
             border-radius: 8px;
             transition: transform 0.3s ease-in-out;
         }
+
         .video-thumbnail:hover {
             transform: scale(1.05);
         }
+
         .btn-primary {
             transition: background-color 0.3s ease, transform 0.3s ease;
         }
+
         .btn-primary:hover {
             background-color: #ff0000;
             transform: scale(1.05);
         }
+
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
     </style>
 </head>
+
 <body>
     <div class="container text-center">
         <h1 class="mb-4" style="color: #ff0000;">QuickTude</h1>
-                
+
         <form id="download-form">
             <div class="mb-3">
-                <input type="text" class="form-control" id="video-url" placeholder="Enter YouTube URL" required oninput="fetchVideoDetails()">
+                <input type="text" class="form-control" id="video-url" placeholder="Enter YouTube URL" required
+                    oninput="fetchVideoDetails()">
             </div>
-            
+
             <div class="video-preview" id="video-preview">
                 <img id="video-thumbnail" class="video-thumbnail" src="" alt="Video Thumbnail">
                 <p id="video-title"></p>
             </div>
-            
+
             <div class="mb-3">
                 <label for="quality">Select Quality:</label>
                 <select id="quality" class="form-select">
@@ -79,26 +94,26 @@
                     <option value="1080p">1080p</option>
                 </select>
             </div>
-            
+
             <div class="mb-3">
                 <label>Download Options:</label>
                 <div class="btn-group d-flex" role="group">
                     <input type="radio" class="btn-check" name="download-type" value="video" id="video" checked>
                     <label class="btn btn-outline-light w-100" for="video"><i class="fas fa-video"></i> Video</label>
-                    
+
                     <input type="radio" class="btn-check" name="download-type" value="audio" id="audio">
                     <label class="btn btn-outline-light w-100" for="audio"><i class="fas fa-music"></i> Audio</label>
-                    
+
                 </div>
             </div>
-            
+
             <button type="submit" class="btn btn-primary w-100"><i class="fas fa-download"></i> Download</button>
         </form>
-        
+
         <div class="progress mt-4">
             <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%;">0%</div>
         </div>
-        
+
         <div id="downloadLink"></div>
     </div>
 
@@ -130,7 +145,7 @@
             // Simulate progress bar
             let progress = 0;
             let interval = setInterval(() => {
-                if (progress < 90) {  
+                if (progress < 90) {
                     progress += 10;
                     progressText.style.width = `${progress}%`;
                     progressText.innerText = `${progress}%`;
@@ -143,28 +158,54 @@
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ url: url, quality: quality, type: type })
             })
-            .then(response => response.json())
-            .then(data => {
-                clearInterval(interval);
-                if (data.error) {
-                    alert("Error: " + data.error);
-                    progressBar.style.display = "none";
-                } else {
-                    progressText.style.width = "100%";
-                    progressText.innerText = "Download Ready!";
-                    
-                    // Show download button
-                    downloadLink.innerHTML = `
+                .then(response => response.json())
+                .then(data => {
+                    clearInterval(interval);
+                    if (data.error) {
+                        alert("Error: " + data.error);
+                        progressBar.style.display = "none";
+                    } else {
+                        progressText.style.width = "100%";
+                        progressText.innerText = "Download Ready!";
+
+                        // Show download button
+                        downloadLink.innerHTML = `
                         <a class="btn btn-success mt-3" href="/download-file?file=${data.file}" download>Click to Download</a>
                     `;
-                }
-            })
-            .catch(error => {
-                clearInterval(interval);
-                alert("Something went wrong.");
-                console.error(error);
-            });
+                    }
+                })
+                .catch(error => {
+                    clearInterval(interval);
+                    alert("Something went wrong.");
+                    console.error(error);
+                });
+        }
+
+        function fetchVideoDetails() {
+            let url = document.getElementById("video-url").value;
+
+            if (!url.trim()) {
+                document.getElementById("video-preview").style.display = "none";
+                return;
+            }
+
+            fetch(`https://noembed.com/embed?url=${url}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.title && data.thumbnail_url) {
+                        document.getElementById("video-thumbnail").src = data.thumbnail_url;
+                        document.getElementById("video-title").innerText = data.title;
+                        document.getElementById("video-preview").style.display = "block";
+                    } else {
+                        document.getElementById("video-preview").style.display = "none";
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching video details:", error);
+                    document.getElementById("video-preview").style.display = "none";
+                });
         }
     </script>
 </body>
+
 </html>
